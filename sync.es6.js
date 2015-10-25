@@ -47,6 +47,13 @@ getSecrets()
   const floatConfig = secrets.floatSchedule;
   const googleConfig = secrets.google;
 
+  // Authorize Google
+  authorizeGoogle(googleConfig, getEvents)
+  .then(auth => { return getEvents(auth); })
+  .then(events => {
+    console.log('events: ', events);
+  });
+
   const popsicle = require('popsicle');
 
   popsicle({
@@ -68,7 +75,68 @@ getSecrets()
     } else {
       const floatTasks = res.body.people[0].tasks;
 
-      console.log(floatTasks);
+      /*console.log(floatTasks);*/
     }
   });
 });
+
+// Google
+const google = require('googleapis');
+const googleAuth = require('google-auth-library');
+
+const SCOPES = ['http://www.googleapis.com/auth/calendar.readonly'];
+const TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
+                   process.env.USERPROFILE) + '/.credentials/';
+const TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
+
+function authorizeGoogle(credentials) {
+  return new Promise((resolve, reject) => {
+    const clientSecret = credentials.installed.clientSecret;
+    const clientId = credentials.installed.clientId;
+    const redirectUrl = credentials.installed.redirectUris[0];
+    const auth = new googleAuth();
+    const oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+
+    // Check if we have previously stored a token.
+    fs.readFile(TOKEN_PATH, function(err, token) {
+      if (err) {
+        throw new Error('No token found..');
+      } else {
+        oauth2Client.credentials = JSON.parse(token);
+        resolve(oauth2Client);
+      }
+    });
+  });
+}
+
+function getEvents(auth) {
+  return new Promise((resolve, reject) => {
+    const calendar = google.calendar('v3');
+
+    calendar.events.list({
+      auth: auth,
+      calendarId: 'primary',
+      timeMin: (new Date().toISOString()),
+    }, (err, response) => {
+      if (err) { throw new Error('Could not connect to Google Calendar.'); }
+
+      var events = response.items;
+
+      if (events.length === 0) {
+        console.log('No upcoming events found.');
+      } else {
+        console.log(`${events.length} events found`);
+
+        resolve(events.map((e) => {
+          return {
+            eventId: e.id,
+            summary: e.summary,
+            eventStatus: e.status,
+            start: e.start.dateTime,
+            endTime: e.end.dateTime,
+          };
+        }));
+      }
+    });
+  });
+};
