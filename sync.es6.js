@@ -32,5 +32,31 @@ function getSecrets() {
 
 getSecrets()
 .then(secrets => {
-  console.log('secrets: ', secrets);
+  const floatConfig = secrets.floatSchedule;
+  const googleConfig = secrets.google;
+
+  const popsicle = require('popsicle');
+
+  popsicle({
+    method: 'GET',
+    url: floatConfig.apiUrl + 'tasks',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${floatConfig.apiToken}`,
+    },
+    query: {
+      people_id: floatPeopleId,
+    },
+  })
+  .then(function (res) {
+    if (res.status != 200) {
+      console.log('Could not receive tasks for Float People ID: ', floatPeopleId);
+      throw new Error();
+    } else {
+      const floatTasks = res.body.people[0].tasks;
+
+      console.log(floatTasks);
+    }
+  });
 });
