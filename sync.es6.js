@@ -22,6 +22,7 @@ function getSecrets() {
     fs.readFile('secrets.json', (err, content) => {
       if (err) {
         console.log('Error loading secrets file.. ', err);
+        reject(err);
       }
 
       resolve(JSON.parse(content));
