@@ -3,20 +3,30 @@
 require('es6-promise').polyfill();
 
 // Check For Arguments
-var program = require('commander');
+const cliArgs = require("command-line-args");
+const cli = cliArgs([
+  { name: 'floatPeopleId', alias: 'p', type: Number, },
+  { name: 'floatTaskId', alias: 't', type: Number, defaultOption: false },
+]);
 
-program
-  .version('0.0.1')
-  .option('-t --floatTaskId [floatTaskId]', 'Float Task Id')
-  .option('-p --floatPeopleId [floatPeopleId]', 'Float People Id')
-  .parse(process.argv);
+const argsPassed = cli.parse();
 
-const floatPeopleId = program.floatPeopleId || 142306;
-const floatTaskId = program.floatTaskId || '';
+if (!argsPassed.floatPeopleId) {
+  throw new Error('Float People ID must be present. Aborting...');
+}
 
+
+// Set Float IDs
+const floatPeopleId = argsPassed.floatPeopleId;
+const floatTaskId = argsPassed.floatTaskId || '';
+
+
+// File System && Readline
 const fs = require('fs');
 const readfill = require('readline');
 
+
+// Read Secrets
 function getSecrets() {
   return new Promise((resolve, reject) => {
     fs.readFile('secrets.json', (err, content) => {
@@ -30,6 +40,8 @@ function getSecrets() {
   });
 };
 
+
+// Execute Sync
 getSecrets()
 .then(secrets => {
   const floatConfig = secrets.floatSchedule;
