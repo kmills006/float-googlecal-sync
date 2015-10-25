@@ -1,8 +1,18 @@
 "use strict";
 
-console.log('Sync Float Schedule with Google Calendar');
-
 require('es6-promise').polyfill();
+
+// Check For Arguments
+var program = require('commander');
+
+program
+  .version('0.0.1')
+  .option('-t --floatTaskId [floatTaskId]', 'Float Task Id')
+  .option('-p --floatPeopleId [floatPeopleId]', 'Float People Id')
+  .parse(process.argv);
+
+const floatPeopleId = program.floatPeopleId || 142306;
+const floatTaskId = program.floatTaskId || '';
 
 const fs = require('fs');
 const readfill = require('readline');
